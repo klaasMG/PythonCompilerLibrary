@@ -35,11 +35,12 @@ struct BinaryExprNode{
     size_t right;
 };
 struct CallExprNode{
+    bool is_await;
     std::string name;
     std::vector<size_t> args;
 };
 struct AssignNode{
-    std::string asinged;
+    size_t identifier;
     size_t value;
 };
 struct CollectionNode{
@@ -50,6 +51,7 @@ struct ProgramNode{
     std::vector<size_t> lines;
 };
 struct FunctionNode{
+    bool is_await;
     std::string name;
     std::vector<size_t> args;
     size_t decorator;
@@ -117,24 +119,47 @@ struct AssertNode {
     size_t msg;
 };
 
+struct BoolNode{
+    bool boolean;
+};
+
 struct AnnotationNode{
     size_t annotation;
 };
 
+using ExprNode = std::variant<BinaryExprNode, UnaryExprNode>;
+
 using Node = std::variant<NumberNode, StringNode, BinaryNode, IdentNode, UnaryExprNode, BinaryExprNode, CallExprNode,
                           AssignNode, CollectionNode ,ProgramNode ,FunctionNode,ClassNode ,IfNode ,WhileNode ,ForNode ,CaseNode ,MatchNode ,TryNode, WithNode, ImportNode, FStringNode, BreakNode,
-                          ContinueNode, AssertNode, AnnotationNode>;
+                          ContinueNode, AssertNode, AnnotationNode, BoolNode>;
 
 class Parser{
 public:
     Parser();
-    std::vector<Node> parse_ast(const std::vector<token>& tokens);
+    std::vector<Node> program_parse_ast(const std::vector<token>& tokens);
 private:
+    size_t Node_pos;
+    std::vector<Node> AST;
+    uint64_t IndentLevel;
     std::vector<token> Tokens;
     uint64_t TokenPos;
+    size_t parse_factor();
+    size_t parse_exponent();
+    size_t parse_muldiv();
+    size_t parse_addsub();
+    size_t parse_shift();
+    size_t parse_and();
+    size_t parse_xor();
+    size_t parse_or();
+    size_t parse_comparison();
+    size_t parse_keyword_and();
+    size_t parse_keyword_or();
+    size_t parse_expression();
+    size_t push_node(const Node& node);
     void reset_parser();
     token get_token();
-    token peek_token();
-    Node keyword_to_node(token keyword);
+    token peek_token(const int& look_ahead = 0);
+    bool match_token(const TokenType& type);
+    void expect_token(TokenType type);
 };
 #endif //SUPERBUILD_AST_H
